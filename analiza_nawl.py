@@ -10,7 +10,7 @@ data['val_M_all'] = data['val_M_all'].astype(float)
 
 nawl_words = data.NAWL_word  # wczytanie słów z bazy NAWL
 
-argumentacje = pd.read_csv("./dane/Baza_arg_dot_zdrowia.csv", delimiter=",",
+argumentacje = pd.read_csv("./dane/Baza argumentacji do metody leksykalnej.csv", delimiter=",",
                            usecols=["Konkluzja", "Przesłanka 1", "Przesłanka 2", "Przesłanka 3", "Przesłanka 4",
                                     "Przesłanka 5", "Przesłanka 6", "Przesłanka 7", "Przesłanka 8"])
 
@@ -45,8 +45,8 @@ def lemmatizer(mylist):  # zwraca wyrazy zmienione do formy podstawowej
 def list_matcher(my_lists, emo_list):
     result = []
     for l in my_lists:
-        if type(l) == float:
-            continue
+        if type(l) == float:  # jeżeli lista nie jest listą tylko cyfrą/Null
+            continue  # pomijamy
         l = lemmatizer(tokenizer(l))
         result += [my_matcher(l, emo_list)]
     return result
@@ -65,27 +65,27 @@ def sentence_valence(my_sentence, emo_df):
     return mean(result)
 
 
-def print_matched_sentences(sentences_list, emo_df):
+def all_sentences_valence(sentences_list: list, emo_df) -> float:
     nawl_match = list_matcher(sentences_list, emo_df.NAWL_word)
     valences = []
     for sentence in nawl_match:
         result = sentence_valence(sentence, data)
         if result:
             valences += [result]
-        print(result, end='\t')
-    print()
-    print(nawl_match)
-    print(mean(valences))
-    print()
+        #print(result, end='\t')
+    #print(nawl_match)
+    return mean(valences)
+    #print()
+
+#zmiana walencji na zmienne kategorialne
+def categorical_variable(list_of_valences):
+    for walencja in list_of_valences:
+        if walencja >= 0.2:
+            pass
 
 
-print_matched_sentences(konk, data)
-print_matched_sentences(p1, data)
-print_matched_sentences(p2, data)
-print_matched_sentences(p3, data)
-print_matched_sentences(p4, data)
-print_matched_sentences(p5, data)
-print_matched_sentences(p6, data)
-print_matched_sentences(p7, data)
-print_matched_sentences(p8, data)
+NAWL_value_list = [all_sentences_valence(konk, data), all_sentences_valence(p1, data), all_sentences_valence(p2, data),
+                   all_sentences_valence(p3, data), all_sentences_valence(p4, data), all_sentences_valence(p5, data),
+                   all_sentences_valence(p6, data), all_sentences_valence(p7, data), all_sentences_valence(p8, data)]
+
 
