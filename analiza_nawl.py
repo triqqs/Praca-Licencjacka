@@ -11,8 +11,12 @@ data['val_M_all'] = data['val_M_all'].astype(float)
 nawl_words = data.NAWL_word  # wczytanie słów z bazy NAWL
 
 argumentacje_df = pd.read_csv("./dane/Baza argumentacji do metody leksykalnej.csv", delimiter=",",
-                           usecols=["Konkluzja", "Przesłanka 1", "Przesłanka 2", "Przesłanka 3", "Przesłanka 4",
+                           usecols=["Typ argumentu (szeregowy lub równoległy)", "Konkluzja", "Przesłanka 1", "Przesłanka 2", "Przesłanka 3", "Przesłanka 4",
                                     "Przesłanka 5", "Przesłanka 6", "Przesłanka 7", "Przesłanka 8"])
+
+
+braki_danych = pd.concat([argumentacje_df.isnull().sum()], axis=1)
+#print(braki_danych)
 
 
 def my_matcher(mylist, emolist):  # zwraca część wspólną dwóch list (bez powtórzeń)
@@ -40,6 +44,7 @@ def list_matcher(my_lists, emo_list):
         else:
             l = lemmatizer(tokenizer(l))
             result += [my_matcher(l, emo_list)]
+    # print(sum([len(el) for el in result if el is not False]))  # odkomentować aby zobaczyć liczbę słów emotywnych
     return result
 
 
@@ -58,18 +63,18 @@ def sentence_valence(my_sentence, emo_df):
     return mean(result)
 
 
+#zwracanie walencji dla ADU emotywnych w bazie argumentacji i kategoryzacja ich
 def all_sentences_valence(sentences_list: list, emo_df) -> list:
     nawl_match = list_matcher(sentences_list, emo_df.NAWL_word)
     valences = []
     for sentence in nawl_match:
         result = sentence_valence(sentence, data)
+        #lambda -> zamiast robić funkcje to robi ją w jednej linijce (def sign)
         sign = lambda x: x and (-1 if x < 0 else 1)
         valences += [sign(result) if result is not None else None]
-
         #print(result, end='\t')
-    #print(nawl_match)
     return valences
-    #print()
+
 
 
 #tworzenie nowych kolumn ze skategoryzowanymi wartościami
@@ -85,12 +90,18 @@ argumentacje_df["p8-cat"] = all_sentences_valence(argumentacje_df["Przesłanka 8
 
 
 if __name__ == "__main__":
+    # liczy słowa emotywne w kolumnie (trzeba odkomentować linijkę 47)
+    print([len(list_matcher(argumentacje_df[col], nawl_words)) for col in
+           ["Konkluzja", "Przesłanka 1", "Przesłanka 2", "Przesłanka 3"]])
+
+    # liczenie WYRAŻEŃ (ADU) emotywnych
     print(argumentacje_df['k-cat'].value_counts(dropna=False))
     print(argumentacje_df['p1-cat'].value_counts(dropna=False))
     print(argumentacje_df['p2-cat'].value_counts(dropna=False))
     print(argumentacje_df['p3-cat'].value_counts(dropna=False))
     print(argumentacje_df['p4-cat'].value_counts(dropna=False))
     print(argumentacje_df['p8-cat'].value_counts(dropna=False))
+
     # print(len(all_sentences_valence(argumentacje_df["Konkluzja"], data)))
     # print(len(all_sentences_valence(argumentacje_df["Przesłanka 5"], data)))
     # print(argumentacje_df["Konkluzja"])
